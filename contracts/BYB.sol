@@ -382,7 +382,7 @@ contract Ownable is Context {
     /**
      * @dev Returns the address of the current owner.
      */
-    function owner() public view returns (address) {
+    function owner() external view returns (address) {
         return _owner;
     }
 
@@ -401,7 +401,7 @@ contract Ownable is Context {
      * NOTE: Renouncing ownership will leave the contract without an owner,
      * thereby removing any functionality that is only available to the owner.
      */
-    function renounceOwnership() public virtual onlyOwner {
+    function renounceOwnership() external virtual onlyOwner {
         emit OwnershipTransferred(_owner, address(0));
         _owner = address(0);
     }
@@ -410,25 +410,25 @@ contract Ownable is Context {
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
      */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
+    function transferOwnership(address newOwner) external virtual onlyOwner {
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
 
-    function geUnlockTime() public view returns (uint256) {
+    function geUnlockTime() external view returns (uint256) {
         return _lockTime;
     }
 
     //Locks the contract for owner for the amount of time provided
-    function lock(uint256 time) public virtual onlyOwner {
+    function lock(uint256 time) external virtual onlyOwner {
         _owner = address(0);
         _lockTime = block.timestamp + time;
         emit OwnershipTransferred(_owner, address(0));
     }
     
     //Unlocks the contract for owner when _lockTime is exceeds
-    function unlock() public virtual {
+    function unlock() external virtual {
         require(_previousOwner == msg.sender, "You don't have permission to unlock");
         require(block.timestamp > _lockTime , "Contract is locked until 7 days");
         emit OwnershipTransferred(_owner, _previousOwner);
@@ -448,51 +448,49 @@ contract BYB is Context, IERC20, Ownable {
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
     
-    constructor(string memory name_, string memory symbol_) {
-        _name = name_;
-        _symbol = symbol_;
+    constructor() {
+        _name = "BYB";
+        _symbol = "BYB";
         _decimals = 18;
-        _totalSupply = 1000000 * 10 ** _decimals;
-        _maxSupply = 1 * 10**9 * 10** _decimals;
-        _balances[_msgSender()] += _totalSupply;
-        emit Transfer(address(0), _msgSender(), _totalSupply);
+        _maxSupply = 1000 * 10**9 * 10** _decimals;
+        _mint(_msgSender(), 100000000000 * 10 ** _decimals);
     }
     
-    function balanceOf(address account) public virtual view override returns(uint256){
+    function balanceOf(address account) external virtual view override returns(uint256){
         return _balances[account];
     }
     
-    function name() public view returns(string memory) {
+    function name() external view returns(string memory) {
         return _name;
     }
     
-    function symbol() public view returns(string memory) {
+    function symbol() external view returns(string memory) {
         return _symbol;
     }
     
-    function totalSupply() public virtual view override returns(uint256) {
+    function totalSupply() external virtual view override returns(uint256) {
         return _totalSupply;
     }
 
-    function maximumSupply() public view returns(uint256){
+    function maximumSupply() external view returns(uint256){
         return _maxSupply;
     }
     
-    function decimals() public view returns (uint8) {
+    function decimals() external view returns (uint8) {
         return _decimals;
     }
     
     
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+    function transfer(address recipient, uint256 amount) external virtual override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
     
-    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+    function allowance(address owner, address spender) external view virtual override returns (uint256) {
         return _allowances[owner][spender];
     }
     
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+    function approve(address spender, uint256 amount) external virtual override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
@@ -501,7 +499,7 @@ contract BYB is Context, IERC20, Ownable {
         address sender,
         address recipient,
         uint256 amount
-    ) public virtual override returns (bool) {
+    ) external virtual override returns (bool) {
         _transfer(sender, recipient, amount);
         uint256 currentAllowance = _allowances[sender][_msgSender()];
         require(currentAllowance >= amount, "BYB: transfer amount exceeds allowance");
@@ -511,12 +509,12 @@ contract BYB is Context, IERC20, Ownable {
         return true;
     }
     
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) external virtual returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
         return true;
     }
     
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) external virtual returns (bool) {
         uint256 currentAllowance = _allowances[_msgSender()][spender];
         require(currentAllowance >= subtractedValue, "BYB: decreased allowance below zero");
         unchecked {
@@ -544,13 +542,13 @@ contract BYB is Context, IERC20, Ownable {
     }
     
     
-    function mint(uint256 amount) public onlyOwner returns(bool) {
+    function mint(uint256 amount) external onlyOwner returns(bool) {
         _mint(_msgSender(), amount);
         return true;
     }
     
     
-    function burn(uint256 amount) public onlyOwner returns(bool) {
+    function burn(uint256 amount) external onlyOwner returns(bool) {
         _burn(_msgSender(), amount);
         return true;
     }
@@ -559,7 +557,7 @@ contract BYB is Context, IERC20, Ownable {
     
     function _mint(address account, uint256 amount) internal virtual {
         require(account != address(0), "BYB: mint to the zero address");
-        require(_totalSupply <= _maxSupply, "BYB: maximum supply reached.");
+        require(_totalSupply.add(amount) <= _maxSupply, "BYB: maximum supply reached.");
         _beforeTokenTransfer(address(0), account, amount);
         _balances[account] += amount;
         _totalSupply += amount;
